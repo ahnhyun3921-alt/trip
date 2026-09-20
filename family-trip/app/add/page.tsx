@@ -95,7 +95,7 @@ function Form() {
           </div>
           {f.dur && <span style={{ fontSize: 12, color: mins ? 'var(--muted)' : 'var(--sky-text)', marginTop: -8 }}>{mins ? `${mins}분으로 계산해요` : '시간으로 읽지 못했어요 · "40분", "2시간"처럼 적어주세요'}</span>}
           <div className="field"><label htmlFor="addr">중국어 주소 (기사님께 보여줄 것)</label><input id="addr" className="zh" lang="zh-CN" value={f.addr} onChange={(e) => set({ addr: e.target.value })} placeholder="上海市黄浦区 ..." /></div>
-          <div className="field"><label htmlFor="note">장소 특이사항 (AI가 일정 조정할 때 참고)</label><input id="note" value={f.note} onChange={(e) => set({ note: e.target.value })} placeholder="예: 오전이 덜 붐빔, 월요일 휴무" /></div>
+          <div className="field"><label htmlFor="note">장소 특이사항</label><input id="note" value={f.note} onChange={(e) => set({ note: e.target.value })} placeholder="예: 오전이 덜 붐빔, 월요일 휴무" /></div>
           <div className="field"><label htmlFor="memo">메모</label><input id="memo" value={f.memo} onChange={(e) => set({ memo: e.target.value })} placeholder="예: 구곡교에서 가족사진" /></div>
           {!editId && <div className="field"><label htmlFor="todo">할 일</label><input id="todo" value={f.todo} onChange={(e) => set({ todo: e.target.value })} placeholder="예: 여권 챙기기" /></div>}
         </div>
