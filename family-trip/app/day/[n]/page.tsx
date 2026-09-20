@@ -1,21 +1,17 @@
 'use client';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { deleteBlock, logChange, reorderBlocks, restoreBlock, updateBlock, useBlocks, useDays, useMe } from '@/lib/data';
 import { Icon, P, TYPE_PATHS } from '@/lib/icons';
-import { fromMin, nowMin, todayISO, toMin } from '@/lib/time';
-import type { AiOption, Block } from '@/lib/types';
-import { TopBar, useToast } from '@/components/ui';
+import { nowMin, toMin } from '@/lib/time';
+import type { Block } from '@/lib/types';
+import { Confirm, TopBar, useToast } from '@/components/ui';
 import BlockSheet from '@/components/BlockSheet';
 import EditList from '@/components/EditList';
-import AiCard from '@/components/AiCard';
-
-type Ai = { heading: string; sub: string; loading: boolean; error: string | null; options: AiOption[] };
 
 function DayView() {
   const n = Number(useParams().n);
-  const forceLate = useSearchParams().get('late') === '1';
   const router = useRouter();
   const { me } = useMe();
   const toast = useToast();
@@ -25,7 +21,8 @@ function DayView() {
   const [focus, setFocus] = useState<string | null>(null);
   const [sheetId, setSheetId] = useState<string | null>(null);
   const [edit, setEdit] = useState(false);
-  const [ai, setAi] = useState<Ai | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<Block | null>(null);
+  const [editKey, setEditKey] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const press = useRef<ReturnType<typeof setTimeout>>();
 
@@ -79,69 +76,25 @@ function DayView() {
     });
   }, [blocks, day]);
 
-  // ---------- AI ----------
-  const askAi = useCallback(async (mode: 'reflow' | 'late', list: Block[], extra: { removed?: string; moved?: string }, heading: string, sub: string) => {
-    if (!day) return;
-    setAi({ heading, sub, loading: true, error: null, options: [] });
-    try {
-      const r = await fetch('/api/ai', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          mode, dayN: day.n, city: day.city, now: fromMin(nowMin()), ...extra,
-          blocks: list.map((b) => ({ id: b.id, name: b.name, type: b.type, start_time: b.start_time, duration_min: b.duration_min, note: b.note, reserved: !!b.reservation, travel_min: b.travel?.minutes ?? null })),
-        }),
-      });
-      const j = await r.json();
-      if (j.error) throw new Error(j.error);
-      setAi({ heading, sub, loading: false, error: null, options: j.options });
-    } catch (e) {
-      setAi({ heading, sub, loading: false, error: e instanceof Error ? e.message : 'AI가 답하지 못했어요', options: [] });
-    }
-  }, [day]);
-
-  const apply = async (o: AiOption) => {
-    try {
-      for (const c of o.changes) {
-        if (c.remove) await deleteBlock(c.id);
-        else await updateBlock(c.id, { ...(c.start_time ? { start_time: c.start_time } : {}), ...(c.duration_min ? { duration_min: c.duration_min } : {}) });
-      }
-      await logChange(day!.n, o.summary);
-      setAi(null);
-      refresh();
-      toast({ text: '반영했어요 · 가족에게 알림을 보냈어요' });
-    } catch (e) { toast({ text: e instanceof Error ? e.message : '바꾸지 못했어요' }); }
-  };
-
-  // 아침 10시 전 첫 접속 + 첫 일정 시작 지남
-  const lateChecked = useRef(false);
-  useEffect(() => {
-    if (!day || !blocks?.length || lateChecked.current) return;
-    lateChecked.current = true;
-    const key = 'late.' + todayISO();
-    const first = toMin(blocks[0].start_time);
-    const now = nowMin();
-    const ok = forceLate || (day.date === todayISO() && now < 600 && !localStorage.getItem(key) && first != null && now > first);
-    if (!ok) return;
-    localStorage.setItem(key, '1');
-    askAi('late', blocks, {}, `첫 일정 ${blocks[0].name}(${blocks[0].start_time})보다 ${first != null ? now - first : 0}분 늦었어요`, '좋은 아침이에요 · 장소별 특이사항을 보고 맞춰봤어요');
-  }, [day, blocks, forceLate, askAi]);
-
-  const onRemove = async (b: Block) => {
+  // 빼기: "정말 뺄까요?" 확인 → 반영 + 가족 알림 (되돌리기 가능)
+  const onRemove = (b: Block) => setPendingRemove(b);
+  const confirmRemove = async () => {
+    const b = pendingRemove!;
+    setPendingRemove(null);
     try {
       await deleteBlock(b.id);
       await logChange(day!.n, `${b.name} 빠짐`);
       refresh();
-      toast({ text: `${b.name}을(를) 뺐어요`, action: { label: '되돌리기', run: async () => { await restoreBlock(b); await logChange(day!.n, `${b.name} 다시 넣음`); refresh(); setAi(null); } } });
-      const rest = (blocks ?? []).filter((x) => x.id !== b.id);
-      askAi('reflow', rest, { removed: b.name }, '이렇게 바꿔볼까요?', '예약된 일정은 그대로 두고 짰어요');
+      toast({ text: `${b.name}을(를) 뺐어요 · 가족에게 알림을 보냈어요`, action: { label: '되돌리기', run: async () => { await restoreBlock(b); await logChange(day!.n, `${b.name} 다시 넣음`); refresh(); setEditKey((k) => k + 1); } } });
     } catch (e) { toast({ text: e instanceof Error ? e.message : '빼지 못했어요' }); }
   };
+  const cancelRemove = () => { setPendingRemove(null); setEditKey((k) => k + 1); };
   const onReorder = async (ids: string[], moved: Block) => {
-    await reorderBlocks(ids);
-    await logChange(day!.n, `${moved.name} 순서 바꿈`);
-    refresh();
-    const byId = new Map((blocks ?? []).map((b) => [b.id, b]));
-    askAi('reflow', ids.map((id) => byId.get(id)!).filter(Boolean), { moved: moved.name }, '순서에 맞춰 시간을 정리할까요?', '예약된 일정은 그대로 두고 짰어요');
+    try {
+      await reorderBlocks(ids);
+      await logChange(day!.n, `${moved.name} 순서 바꿈`);
+      refresh();
+    } catch (e) { toast({ text: e instanceof Error ? e.message : '순서를 바꾸지 못했어요' }); }
   };
 
   const sheetBlock = useMemo(() => blocks?.find((b) => b.id === sheetId) ?? null, [blocks, sheetId]);
@@ -164,7 +117,7 @@ function DayView() {
       </div>
 
       {edit && blocks ? (
-        <EditList blocks={blocks} onRemove={onRemove} onReorder={onReorder} onDone={() => setEdit(false)} />
+        <EditList key={editKey} blocks={blocks} onRemove={onRemove} onReorder={onReorder} onDone={() => setEdit(false)} />
       ) : (
         <div className="tl" ref={listRef}>
           {blocks?.length === 0 && <p className="empty">아직 블록이 없어요. 오른쪽 위 + 로 첫 일정을 넣어보세요.</p>}
@@ -203,14 +156,18 @@ function DayView() {
         </div>
       )}
 
-      {!edit && !ai && blocks && blocks.length > 1 && (
+      {!edit && blocks && blocks.length > 1 && (
         <div style={{ position: 'fixed', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
           <span style={{ fontSize: 12, color: '#fff', background: 'var(--ink)', padding: '9px 14px', borderRadius: 999 }}>길게 눌러 끌면 순서를 바꿀 수 있어요</span>
         </div>
       )}
 
       {sheetBlock && <BlockSheet key={sheetBlock.id} block={sheetBlock} day={day} onClose={() => setSheetId(null)} />}
-      {ai && <AiCard {...ai} dayN={day.n} onApply={apply} onClose={() => setAi(null)} />}
+      {pendingRemove && (
+        <Confirm title="정말 뺄까요?" body={`D${day.n} 일정에서 빠지고 가족 모두에게 알림이 가요.`}
+          preview={{ label: `알림 미리보기 · D${day.n} 일정 변경`, lines: [`${pendingRemove.name} 빠짐`] }}
+          okLabel="빼기" onCancel={cancelRemove} onOk={confirmRemove} />
+      )}
     </main>
   );
 }
