@@ -42,3 +42,13 @@ export function rangeText(start: string | null, dur: number | null): string {
   if (s == null) return '';
   return dur ? `${start} – ${fromMin(s + dur)}` : start!;
 }
+
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+// '2026-12-20' → '12/20 (일)'
+export function dateLabel(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return `${Number(m[2])}/${Number(m[3])} (${WD[d.getDay()]})`;
+}
