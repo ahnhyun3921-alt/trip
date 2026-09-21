@@ -52,6 +52,7 @@ export default function Trip() {
       <div className="top">
         <Link href="/spend" className="icon-btn" aria-label="지출 기록"><Icon d={P.receipt} size={22} /></Link>
         <div className="right">
+          <Link href="/cards" className="icon-btn" aria-label="중국어 카드"><Icon d={P.chat} size={22} /></Link>
           <Link href="/toilet" className="icon-btn" aria-label="근처 화장실"><Icon d={P.wc} size={22} /></Link>
           <Link href={`/add${day ? `?day=${day.n}` : ''}`} className="icon-btn" aria-label="일정 추가"><Icon d={P.plus} size={22} stroke={1.9} /></Link>
           <Link href="/?switch=1" className="icon-btn filled" aria-label={`${me ?? ''} · 사람 바꾸기`}>{meM && <Face d={meM.face} size={28} />}</Link>
