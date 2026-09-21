@@ -2,9 +2,9 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { deleteBlock, logChange, reorderBlocks, restoreBlock, useBlocks, useDays, useMe } from '@/lib/data';
+import { deleteBlock, logChange, reorderBlocks, restoreBlock, updateDay, useBlocks, useDays, useMe } from '@/lib/data';
 import { Icon, P, TYPE_PATHS } from '@/lib/icons';
-import { nowMin, toMin } from '@/lib/time';
+import { dateLabel, nowMin, toMin } from '@/lib/time';
 import type { Block } from '@/lib/types';
 import { Confirm, TopBar, useToast } from '@/components/ui';
 import BlockSheet from '@/components/BlockSheet';
@@ -23,6 +23,7 @@ function DayView() {
   const [edit, setEdit] = useState(false);
   const [pendingRemove, setPendingRemove] = useState<Block | null>(null);
   const [editKey, setEditKey] = useState(0);
+  const [rename, setRename] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const press = useRef<ReturnType<typeof setTimeout>>();
 
@@ -96,8 +97,21 @@ function DayView() {
           <Link href={`/add?day=${day.n}`} className="icon-btn sky" aria-label="일정 추가"><Icon d={P.plus} size={18} stroke={2} /></Link>
         </>} />
         <div className="head" style={{ paddingLeft: 20 }}>
-          <h1>D{day.n} {day.title}</h1>
-          <div className="meta"><span>{day.city}</span><span className="dot" /><span>블록 {blocks?.length ?? 0}개</span></div>
+          {rename === null ? (
+            <button onClick={() => setRename(day.title)} style={{ border: 'none', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}>
+              <h1>D{day.n} {day.title}</h1>
+              <Icon d={P.pencil} size={16} color="#9a9aa0" />
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, paddingRight: 20 }}>
+              <label className="sr" htmlFor="day-title">날 이름</label>
+              <input id="day-title" autoFocus value={rename} onChange={(e) => setRename(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { updateDay(day.id, { title: rename.trim() }); setRename(null); } if (e.key === 'Escape') setRename(null); }}
+                style={{ flexGrow: 1, minHeight: 44, borderRadius: 12, border: '1px solid var(--line)', padding: '0 12px', fontSize: 18, fontWeight: 700 }} />
+              <button className="btn small" onClick={() => { updateDay(day.id, { title: rename.trim() }); setRename(null); }}>저장</button>
+            </div>
+          )}
+          <div className="meta"><span>{dateLabel(day.date) || day.city}</span><span className="dot" /><span>{dateLabel(day.date) ? day.city : `블록 ${blocks?.length ?? 0}개`}</span>{dateLabel(day.date) && <><span className="dot" /><span>블록 {blocks?.length ?? 0}개</span></>}</div>
         </div>
       </div>
 
