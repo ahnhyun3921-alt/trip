@@ -60,6 +60,14 @@ export default function Toilet() {
       </div>
       {err && <p className="err">{err}</p>}
 
+      <div className="rows">
+        <a className="row" href="/cards">
+          <span className="circle"><Icon d={P.chat} size={19} /></span>
+          <span className="txt"><b>중국어 카드 모음</b><span>알레르기, 주문, 계산까지 크게 보여주기</span></span>
+          <Icon d={P.chev} size={18} color="#9a9aa0" stroke={2} />
+        </a>
+      </div>
+
       <div className="sec-h"><span><b style={{ color: 'var(--ink)' }}>와이탄</b>화장실 지도</span></div>
       <div className="rows">
         <a className="row" href="https://wc.dfancy.cn" target="_blank" rel="noreferrer">
