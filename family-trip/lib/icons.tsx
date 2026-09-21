@@ -31,9 +31,25 @@ export const P = {
   spark: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6',
   wc: 'M7 4.5a1.5 1.5 0 1 0 .1 0M17 4.5a1.5 1.5 0 1 0 .1 0M5 21v-6H4l1.5-7h3L10 15H9v6M15 21V8h4v7h-1v6M12 3v18',
   clock: 'M12 13m-8 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0M12 9v4l2.5 2M9 3h6',
+  chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12.5h5',
   copy: 'M8 8h12v12H8zM4 16V4h12',
   pencil: 'M4 20h4l10-10-4-4L4 16v4zM14 6l4 4',
   grip: 'M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01',
+};
+
+export const CARD_ICONS: Record<string, string> = {
+  milk: 'M9 3h6v3l2 4v10H7V10l2-4zM7 13h10',
+  crab: 'M5 13a7 7 0 0 1 14 0v3H5zM9 10 6 7M15 10l3-3M4 16l-2 2M20 16l2 2M9 20l-2 2M15 20l2 2',
+  nut: 'M12 3c4 2 6 6 6 9a6 6 0 0 1-12 0c0-3 2-7 6-9zM12 6v12',
+  alert: 'M12 3l9 17H3zM12 10v4M12 17h.01',
+  food: 'M4 11h16a8 8 0 0 1-16 0zM9 7c0-1.5 1-1.5 1-3M13 7c0-1.5 1-1.5 1-3',
+  money: 'M5 6h14v12H5zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6',
+  wc: 'M7 4.5a1.5 1.5 0 1 0 .1 0M17 4.5a1.5 1.5 0 1 0 .1 0M5 21v-6H4l1.5-7h3L10 15H9v6M15 21V8h4v7h-1v6M12 3v18',
+  subway: 'M9 3h6a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM6 11h12M9 21l1.5-4M15 21l-1.5-4',
+  car: 'M4 13l2-5h12l2 5v4H4zM6 17v2M18 17v2',
+  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM8.5 13a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0',
+  help: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3.5M12 17h.01',
+  speaker: 'M5 9v6h4l5 4V5L9 9zM17 9a4 4 0 0 1 0 6',
 };
 
 export function Icon({ d, size = 20, stroke = 1.8, color = 'currentColor', fill = 'none' }: { d: string; size?: number; stroke?: number; color?: string; fill?: string }) {
