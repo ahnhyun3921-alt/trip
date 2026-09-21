@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { deleteBlock, logChange, reorderBlocks, restoreBlock, updateBlock, useBlocks, useDays, useMe } from '@/lib/data';
+import { deleteBlock, logChange, reorderBlocks, restoreBlock, useBlocks, useDays, useMe } from '@/lib/data';
 import { Icon, P, TYPE_PATHS } from '@/lib/icons';
 import { nowMin, toMin } from '@/lib/time';
 import type { Block } from '@/lib/types';
@@ -60,21 +60,6 @@ function DayView() {
     setFocus(id);
     requestAnimationFrame(() => listRef.current?.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   };
-
-  // 이동 시간 채우기 (좌표가 있는 이웃 블록끼리, 한 번만)
-  const filling = useRef(new Set<string>());
-  useEffect(() => {
-    if (!blocks || !day) return;
-    blocks.forEach((b, i) => {
-      const prev = blocks[i - 1];
-      if (!prev || b.travel?.fromId === prev.id || !prev.lng || !b.lng || filling.current.has(b.id + prev.id)) return;
-      filling.current.add(b.id + prev.id);
-      fetch(`/api/amap/route?from=${prev.lng},${prev.lat}&to=${b.lng},${b.lat}&city=${encodeURIComponent(day.city)}`)
-        .then((r) => r.json())
-        .then((j) => { if (!j.error) updateBlock(b.id, { travel: { fromId: prev.id, mode: j.mode, minutes: j.minutes, text: j.text } }); })
-        .catch(() => {});
-    });
-  }, [blocks, day]);
 
   // 빼기: "정말 뺄까요?" 확인 → 반영 + 가족 알림 (되돌리기 가능)
   const onRemove = (b: Block) => setPendingRemove(b);
