@@ -5,13 +5,14 @@ import { addExpense, updateBlock, uploadCapture, useExpenses } from '@/lib/data'
 import { MEMBERS } from '@/lib/members';
 import { Icon, P, TYPE_PATHS } from '@/lib/icons';
 import { rangeText } from '@/lib/time';
-import type { Block, Day } from '@/lib/types';
+import type { Block, Day, MenuItem } from '@/lib/types';
 import { Sheet, useToast } from './ui';
 
 const CATS = ['식비', '교통', '입장료', '쇼핑', '숙박', '기타'];
 
 export default function BlockSheet({ block, day, onClose }: { block: Block | null; day: Day; onClose: () => void }) {
-  const [tab, setTab] = useState<'todo' | 'res'>('todo');
+  const [tab, setTab] = useState<'todo' | 'res' | 'menu'>('todo');
+  const [m, setM] = useState({ ko: '', zh: '', price: '', desc: '' });
   const [newTodo, setNewTodo] = useState('');
   const [spendOpen, setSpendOpen] = useState(false);
   const [amount, setAmount] = useState('');
@@ -33,6 +34,7 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
     save({ todos: [...b.todos, { id: Math.random().toString(36).slice(2, 8), text, done: false }] });
     setNewTodo('');
   };
+  const setMenu = (menu: MenuItem[]) => save({ menu });
   const setRes = (patch: Partial<NonNullable<Block['reservation']>>) => save({ reservation: { ...(res ?? {}), ...patch } });
 
   return (
@@ -53,9 +55,10 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
       <div className="tabs">
         <button aria-pressed={tab === 'todo'} onClick={() => setTab('todo')}>할 일 {left || ''}</button>
         <button aria-pressed={tab === 'res'} onClick={() => setTab('res')}>예약</button>
+        {b.type === 'food' && <button aria-pressed={tab === 'menu'} onClick={() => setTab('menu')}>메뉴 {b.menu?.length || ''}</button>}
       </div>
 
-      {tab === 'todo' ? (
+      {tab === 'todo' && (
         <div>
           {b.todos.map((t) => (
             <button key={t.id} onClick={() => toggle(t.id)} style={{ width: '100%', minHeight: 56, border: 'none', borderBottom: '1px solid #f0f0f2', background: 'transparent', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '0 2px' }}>
@@ -67,7 +70,8 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
           <input id="new-todo" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="할 일 적고 Enter"
             style={{ marginTop: 14, width: '100%', minHeight: 46, border: 'none', borderRadius: 14, padding: '0 16px', background: 'var(--surface)', fontSize: 16 }} />
         </div>
-      ) : (
+      )}
+      {tab === 'res' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="field">
             <label>예약 담당</label>
@@ -102,6 +106,59 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
             </label>
           )}
           {res?.url && <a className="btn outline" href={res.url} target="_blank" rel="noreferrer" style={{ borderRadius: 999 }}>예약 페이지 열기<Icon d={P.out} size={16} stroke={2} /></a>}
+        </div>
+      )}
+      {tab === 'menu' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {(b.menu ?? []).length === 0 && <p className="empty" style={{ padding: '4px 0' }}>먹고 싶은 메뉴를 적어두면 주문할 때 보여주기 좋아요</p>}
+          {(b.menu ?? []).map((it) => (
+            <div key={it.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 12, borderBottom: '1px solid #f0f0f2' }}>
+              {it.photo
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={it.photo} alt={it.ko} style={{ width: 64, height: 64, borderRadius: 16, objectFit: 'cover', flexShrink: 0 }} />
+                : <span style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--chip)', flexShrink: 0 }} />}
+              <span style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <b style={{ fontSize: 16 }}>{it.ko}</b>
+                  {it.pick && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky-text)', background: 'var(--sky-tint)', padding: '3px 7px', borderRadius: 999 }}>추천</span>}
+                </span>
+                {it.zh && <span className="zh" lang="zh-CN" style={{ fontSize: 14, color: 'var(--muted)' }}>{it.zh}</span>}
+                {it.desc && <span style={{ fontSize: 13, color: 'var(--text)' }}>{it.desc}</span>}
+                {it.price && <span style={{ fontSize: 14, fontWeight: 700 }}>¥ {it.price}</span>}
+              </span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button className="icon-btn" aria-pressed={!!it.pick} aria-label="추천 표시" onClick={() => setMenu(b.menu.map((x) => (x.id === it.id ? { ...x, pick: !x.pick } : x)))}>
+                  <Icon d={P.star} size={20} color={it.pick ? 'var(--sky-deep)' : '#bdbdc2'} fill={it.pick ? 'var(--sky-deep)' : 'none'} />
+                </button>
+                <button className="icon-btn" aria-label="메뉴 빼기" onClick={() => setMenu(b.menu.filter((x) => x.id !== it.id))}>
+                  <Icon d={P.trash} size={18} color="#9a9aa0" />
+                </button>
+              </span>
+            </div>
+          ))}
+          <div className="card" style={{ gap: 10 }}>
+            <div className="field"><label htmlFor="m-ko">한국어 이름</label><input id="m-ko" value={m.ko} onChange={(e) => setM({ ...m, ko: e.target.value })} placeholder="예: 샤오룽바오" /></div>
+            <div className="field"><label htmlFor="m-zh">중국어 이름 (주문할 때 보여주기)</label><input id="m-zh" className="zh" lang="zh-CN" value={m.zh} onChange={(e) => setM({ ...m, zh: e.target.value })} placeholder="예: 小笼包" /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8 }}>
+              <div className="field"><label htmlFor="m-price">가격 (¥)</label><input id="m-price" inputMode="decimal" value={m.price} onChange={(e) => setM({ ...m, price: e.target.value })} placeholder="0" /></div>
+              <div className="field"><label htmlFor="m-desc">설명</label><input id="m-desc" value={m.desc} onChange={(e) => setM({ ...m, desc: e.target.value })} placeholder="예: 게살 들어간 것" /></div>
+            </div>
+            <button className="btn" disabled={!m.ko.trim()} onClick={() => {
+              setMenu([...(b.menu ?? []), { id: Math.random().toString(36).slice(2, 8), ko: m.ko.trim(), zh: m.zh.trim() || undefined, price: m.price.trim() || undefined, desc: m.desc.trim() || undefined }]);
+              setM({ ko: '', zh: '', price: '', desc: '' });
+            }}>메뉴 추가</button>
+          </div>
+          <label className="btn soft" style={{ cursor: 'pointer' }}>
+            <Icon d={P.plus} size={18} stroke={2} />메뉴 사진 올리기 (마지막에 넣은 메뉴에 붙어요)
+            <input type="file" accept="image/*" className="sr" onChange={async (e) => {
+              const f = e.target.files?.[0]; const list = b.menu ?? [];
+              if (!f || list.length === 0) return;
+              try {
+                const url = await uploadCapture(f);
+                setMenu(list.map((x, i) => (i === list.length - 1 ? { ...x, photo: url } : x)));
+              } catch (err) { toast({ text: err instanceof Error ? err.message : '올리지 못했어요' }); }
+            }} />
+          </label>
         </div>
       )}
 
