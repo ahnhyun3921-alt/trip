@@ -101,6 +101,10 @@ export async function updateBlock(id: string, patch: Partial<Block>) {
   const { error } = await sb().from('blocks').update({ ...patch, updated_by: currentMe(), updated_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
+export async function updateDay(id: string, patch: Partial<Day>) {
+  const { error } = await sb().from('days').update(patch).eq('id', id);
+  if (error) throw error;
+}
 export async function insertBlock(b: Partial<Block>) {
   const { data, error } = await sb().from('blocks').insert({ ...b, updated_by: currentMe() }).select().single();
   if (error) throw error;
