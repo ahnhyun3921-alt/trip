@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useBlocks, useDays, useMe } from '@/lib/data';
 import { memberByName } from '@/lib/members';
 import { Face, Icon, P } from '@/lib/icons';
-import { nowMin, todayISO, toMin } from '@/lib/time';
+import { dateLabel, nowMin, todayISO, toMin } from '@/lib/time';
 import { BlackBar } from '@/components/ui';
 import type { Block } from '@/lib/types';
 
@@ -69,7 +69,7 @@ export default function Trip() {
           <button key={d.id} className={`tile${i === idx ? ' on' : ''}`} aria-pressed={i === idx}
             onClick={() => (i === idx ? router.push(`/day/${d.n}`) : setIdx(i))}>
             <span className="box"><span className="inner"><small>DAY</small><strong>{d.n}</strong></span></span>
-            <span className="cap"><b>{d.title || d.city}</b><span>{d.city}{i === idx ? ' · 누르면 열려요' : ''}</span></span>
+            <span className="cap"><b>{d.title || d.city}</b><span>{[dateLabel(d.date), d.city].filter(Boolean).join(' · ')}{false ? ' · 누르면 열려요' : ''}</span></span>
           </button>
         ))}
       </div>
