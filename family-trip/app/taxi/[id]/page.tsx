@@ -2,7 +2,7 @@
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useBlock, useDays } from '@/lib/data';
-import { amapNav, DIDI_APP } from '@/lib/geo';
+import { amapSearch, DIDI_APP } from '@/lib/geo';
 import { Icon, P } from '@/lib/icons';
 import { BlackBar, TopBar, useToast } from '@/components/ui';
 
@@ -48,13 +48,11 @@ export default function Taxi() {
           <span className="txt"><b>디디</b><span>주소를 복사해 두니 목적지에 붙여넣으세요</span></span>
           <Icon d={P.out} size={18} color="#9a9aa0" stroke={2} />
         </a>
-        {dest.lng && dest.lat && (
-          <a className="row" href={amapNav({ lng: dest.lng, lat: dest.lat, name: dest.zh }, 'car')} target="_blank" rel="noreferrer">
-            <span className="circle"><Icon d={P.map} size={19} /></span>
-            <span className="txt"><b>고덕지도 택시</b><span>목적지가 채워진 채로 열려요 · 打车 누르기</span></span>
-            <Icon d={P.out} size={18} color="#9a9aa0" stroke={2} />
-          </a>
-        )}
+        <a className="row" href={amapSearch(dest.zh)} target="_blank" rel="noreferrer">
+          <span className="circle"><Icon d={P.map} size={19} /></span>
+          <span className="txt"><b>고덕지도 택시</b><span>목적지를 찾아둔 채로 열려요 · 打车 누르기</span></span>
+          <Icon d={P.out} size={18} color="#9a9aa0" stroke={2} />
+        </a>
       </div>
 
       {hotel && (
