@@ -1,18 +1,16 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { amapNav, amapSearch, getHere } from '@/lib/geo';
+import { amapSearch, getHere } from '@/lib/geo';
 import { Icon, P, TYPE_PATHS } from '@/lib/icons';
-import { GATE_LABEL, matchStation, MetroStation, searchStations } from '@/lib/metro-toilets';
+import { GATE_LABEL, MetroStation, searchStations } from '@/lib/metro-toilets';
 import { BlackBar, TopBar } from '@/components/ui';
 
-type Poi = { id: string; name: string; lng: number; lat: number; distance: number; walkMin: number; address: string };
-const KINDS = [
-  { id: 'toilet', label: '공중화장실' },
-  { id: 'metro', label: '지하철역' },
-  { id: 'mall', label: '쇼핑몰' },
-  { id: 'fastfood', label: 'KFC·맥도날드·스타벅스' },
-] as const;
-type Kind = (typeof KINDS)[number]['id'];
+const FINDS = [
+  { id: 'toilet', label: '공중화장실', kw: '厕所' },
+  { id: 'metro', label: '지하철역', kw: '地铁站' },
+  { id: 'mall', label: '쇼핑몰', kw: '商场' },
+  { id: 'fastfood', label: '패스트푸드', kw: '肯德基' },
+];
 
 function StationToilets({ s }: { s: MetroStation }) {
   return (
@@ -27,91 +25,40 @@ function StationToilets({ s }: { s: MetroStation }) {
 }
 
 export default function Toilet() {
-  const [kind, setKind] = useState<Kind>('toilet');
   const [here, setHere] = useState<[number, number] | null>(null);
-  const [pois, setPois] = useState<Poi[] | null>(null);
-  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [phrase, setPhrase] = useState(false);
   const [q, setQ] = useState('');
-
-  const find = async (k: Kind = kind) => {
-    setBusy(true); setErr(null);
-    try {
-      const loc = here ?? (await getHere());
-      setHere(loc);
-      const r = await fetch(`/api/amap/nearby?loc=${loc[0]},${loc[1]}&kind=${k}`);
-      const j = await r.json();
-      if (j.error) throw new Error(j.error);
-      setPois(j.pois);
-    } catch (e) { setErr(e instanceof Error ? e.message : '찾지 못했어요'); }
-    setBusy(false);
-  };
-
-  // 지하철역 탭: 같은 역이 호선별로 여러 번 나오면 하나로
-  const metroRows = useMemo(() => {
-    if (kind !== 'metro' || !pois) return [];
-    const seen = new Set<string>();
-    return pois.map((p) => ({ p, s: matchStation(p.name) })).filter(({ p, s }) => {
-      const key = s?.zh ?? p.name.replace(/\(.*?\)/g, '');
-      if (seen.has(key)) return false;
-      seen.add(key); return true;
-    });
-  }, [kind, pois]);
   const stations = useMemo(() => searchStations(q), [q]);
+
+  // 위치를 알면 그 자리 기준으로, 몰라도 고덕지도에서 바로 찾을 수 있어요
+  const open = async (kw: string) => {
+    let center = here;
+    if (!center) {
+      try { center = await getHere(); setHere(center); }
+      catch (e) { setErr(e instanceof Error ? e.message : '위치를 못 받았어요 · 고덕지도에서 직접 찾아요'); }
+    }
+    window.open(amapSearch(kw, center ?? undefined), '_blank');
+  };
 
   return (
     <main className="page">
       <TopBar back="/trip" />
       <div className="head">
         <h1 className="big">근처 화장실</h1>
-        <div className="meta"><span>지금 위치에서 가까운 순</span>{pois && <><span className="dot" /><span>{kind === 'metro' ? metroRows.length : pois.length}곳</span></>}</div>
+        <div className="meta"><span>고덕지도에서 지금 자리 기준으로 찾아요</span></div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, padding: '20px 24px 0', overflowX: 'auto' }}>
-        {KINDS.map((k) => (
-          <button key={k.id} className="btn small" aria-pressed={kind === k.id}
-            style={{ flexShrink: 0, background: kind === k.id ? 'var(--ink)' : 'var(--chip)', color: kind === k.id ? '#fff' : 'var(--text)' }}
-            onClick={() => { setKind(k.id); setPois(null); if (here) find(k.id); }}>{k.label}</button>
+      <div className="rows" style={{ marginTop: 18 }}>
+        {FINDS.map((f) => (
+          <button key={f.id} className="row" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'left' }} onClick={() => open(f.kw)}>
+            <span className="circle"><Icon d={f.id === 'toilet' ? P.wc : f.id === 'metro' ? P.subway : f.id === 'mall' ? P.pin : TYPE_PATHS.food} size={19} /></span>
+            <span className="txt"><b>{f.label} 찾기</b><span className="zh" lang="zh-CN">{f.kw}</span></span>
+            <Icon d={P.out} size={18} color="#9a9aa0" stroke={2} />
+          </button>
         ))}
       </div>
-
-      {!pois && (
-        <div style={{ padding: '20px 24px 0' }}>
-          <button className="btn" style={{ width: '100%' }} onClick={() => find()} disabled={busy}>{busy ? '찾는 중…' : '지금 위치로 찾기'}</button>
-        </div>
-      )}
-      {err && <p className="err">{err}{here && <> · <a href={amapSearch('厕所', here)} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>고덕지도에서 찾기</a></>}</p>}
-
-      {pois && kind !== 'metro' && (
-        <div className="rows" style={{ marginTop: 12 }}>
-          {pois.length === 0 && <p className="empty">1.5km 안에 없어요. 지하철역 탭도 눌러보세요.</p>}
-          {pois.map((p) => (
-            <a key={p.id} className="row" href={amapNav({ lng: p.lng, lat: p.lat, name: p.name }, 'walk')} target="_blank" rel="noreferrer">
-              <span className="circle"><Icon d={kind === 'toilet' ? P.wc : P.pin} size={19} /></span>
-              <span className="txt"><b className="zh">{p.name}</b><span>도보 약 {p.walkMin}분 · {p.distance}m</span></span>
-              <Icon d={P.out} size={18} color="#9a9aa0" stroke={2} />
-            </a>
-          ))}
-        </div>
-      )}
-
-      {pois && kind === 'metro' && (
-        <div className="rows" style={{ marginTop: 12 }}>
-          {metroRows.length === 0 && <p className="empty">1.5km 안에 지하철역이 없어요.</p>}
-          {metroRows.map(({ p, s }) => (
-            <a key={p.id} className="row" href={amapNav({ lng: p.lng, lat: p.lat, name: p.name }, 'walk')} target="_blank" rel="noreferrer" style={{ alignItems: 'flex-start', padding: '12px 0' }}>
-              <span className="circle"><Icon d={P.subway} size={19} /></span>
-              <span className="txt">
-                <b>{s ? `${s.ko} ` : ''}<span className="zh" style={{ fontWeight: 600 }}>{s?.zh ?? p.name}</span></b>
-                <span>도보 약 {p.walkMin}분 · {p.distance}m</span>
-                {s ? <StationToilets s={s} /> : <span>이 역은 화장실 정보가 없어요</span>}
-              </span>
-              <Icon d={P.out} size={18} color="#9a9aa0" stroke={2} />
-            </a>
-          ))}
-        </div>
-      )}
+      {err && <p className="err">{err}</p>}
 
       <div className="sec-h"><span><b style={{ color: 'var(--ink)' }}>와이탄</b>화장실 지도</span></div>
       <div className="rows">
@@ -129,7 +76,7 @@ export default function Toilet() {
         <span style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>상하이 지하철 안내(2024년 10월) 기준이라 바뀌었을 수 있어요 · 인터넷 없이도 보여요</span>
       </div>
       <div className="rows" style={{ marginTop: 4 }}>
-        {stations.length === 0 && <p className="empty" style={{ padding: '8px 0' }}>목록에 없는 역이에요. 위의 지하철역 탭으로 찾아보세요.</p>}
+        {stations.length === 0 && <p className="empty" style={{ padding: '8px 0' }}>목록에 없는 역이에요. 위의 지하철역 찾기로 고덕지도에서 봐주세요.</p>}
         {stations.map((s) => (
           <div className="row" key={s.zh} style={{ alignItems: 'flex-start', padding: '12px 0' }}>
             <span className="circle"><Icon d={P.subway} size={19} /></span>
