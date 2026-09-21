@@ -6,6 +6,7 @@ import { useBlocks, useDays, useMe } from '@/lib/data';
 import { memberByName } from '@/lib/members';
 import { Face, Icon, P } from '@/lib/icons';
 import { dateLabel, nowMin, todayISO, toMin } from '@/lib/time';
+import { toKrw, useFx } from '@/lib/fx';
 import { BlackBar } from '@/components/ui';
 import type { Block } from '@/lib/types';
 
@@ -46,6 +47,8 @@ export default function Trip() {
 
   const now = useMemo(() => nowBlock(todayBlocks ?? []), [todayBlocks]);
   const meM = memberByName(me);
+  const { fx, error: fxError, setManual } = useFx();
+  const [yuan, setYuan] = useState('');
 
   return (
     <main className="page">
@@ -63,6 +66,29 @@ export default function Trip() {
         <div className="meta"><span>{days?.length ?? 0}일</span><span className="dot" /><span>{me}</span></div>
       </div>
       {error && !days && <p className="err">{error}</p>}
+
+      <section aria-label="환율" style={{ margin: '20px 24px 0', background: 'var(--surface)', borderRadius: 22, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{ fontSize: 15, fontWeight: 700 }}>{fx ? `¥ 1 = ₩ ${fx.rate.toFixed(1)}` : '환율 불러오는 중…'}</span>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{fx ? (fx.manual ? '직접 적은 환율' : `${fx.date} 기준`) : ''}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <label className="sr" htmlFor="yuan">위안 금액</label>
+          <input id="yuan" inputMode="decimal" value={yuan} onChange={(e) => setYuan(e.target.value.replace(/[^\d.]/g, ''))} placeholder="¥ 얼마?"
+            style={{ width: 120, minHeight: 44, border: 'none', borderRadius: 12, padding: '0 12px', background: '#fff', fontSize: 16 }} />
+          <span style={{ fontSize: 18, fontWeight: 700 }}>
+            {fx && yuan ? `≈ ₩ ${toKrw(Number(yuan), fx.rate).toLocaleString()}` : '≈ ₩'}
+          </span>
+        </div>
+        {!fx && fxError && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label className="sr" htmlFor="rate">환율 직접 넣기</label>
+            <input id="rate" inputMode="decimal" placeholder="예: 190" onKeyDown={(e) => { if (e.key === 'Enter') setManual(Number((e.target as HTMLInputElement).value)); }}
+              style={{ width: 110, minHeight: 40, border: 'none', borderRadius: 12, padding: '0 12px', background: '#fff', fontSize: 15 }} />
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{fxError} · 직접 넣고 Enter</span>
+          </div>
+        )}
+      </section>
 
       <div className="sec-h"><span><b style={{ color: 'var(--ink)' }}>날짜별</b>일정</span><span className="count">{day ? `D${day.n} / ${days!.length}` : ''}</span></div>
       <div className="tiles" ref={tilesRef}>
