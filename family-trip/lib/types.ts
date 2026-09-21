@@ -1,6 +1,6 @@
 export type BlockType = 'tour' | 'food' | 'shop' | 'move' | 'stay';
 
-export type Todo = { id: string; text: string; done: boolean };
+export type Todo = { id: string; text: string; done: boolean; time?: string };
 
 export type Reservation = {
   owner?: string;
