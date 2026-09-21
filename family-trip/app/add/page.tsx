@@ -19,14 +19,14 @@ function Form() {
   const toast = useToast();
   const { data: days } = useDays();
   const { data: editing } = useBlock(editId);
-  const [f, setF] = useState({ name: '', zh: '', addr: '', type: 'tour' as BlockType, dayN: Number(q.get('day') ?? 1), start: '', dur: '', note: '', memo: '', todo: '', hasRes: false, owner: '', url: '', cost: '', cat: '입장료', important: false });
+  const [f, setF] = useState({ name: '', zh: '', addr: '', type: 'tour' as BlockType, dayN: Number(q.get('day') ?? 1), start: '', dur: '', note: '', memo: '', travel: '', todo: '', hasRes: false, owner: '', url: '', cost: '', cat: '입장료', important: false });
   const [busy, setBusy] = useState(false);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
 
   useEffect(() => {
     if (!editing || !days) return;
     const d = days.find((x) => x.id === editing.day_id);
-    setF((x) => ({ ...x, name: editing.name, zh: editing.zh_name ?? '', addr: editing.zh_address ?? '', type: editing.type, dayN: d?.n ?? x.dayN, start: editing.start_time ?? '', dur: editing.duration_text ?? '', note: editing.note ?? '', memo: editing.memo ?? '', hasRes: !!editing.reservation, owner: editing.reservation?.owner ?? '', url: editing.reservation?.url ?? '', important: editing.important }));
+    setF((x) => ({ ...x, name: editing.name, zh: editing.zh_name ?? '', addr: editing.zh_address ?? '', type: editing.type, dayN: d?.n ?? x.dayN, start: editing.start_time ?? '', dur: editing.duration_text ?? '', note: editing.note ?? '', memo: editing.memo ?? '', travel: editing.travel?.text ?? '', hasRes: !!editing.reservation, owner: editing.reservation?.owner ?? '', url: editing.reservation?.url ?? '', important: editing.important }));
   }, [editing, days]);
 
   const save = async () => {
@@ -34,18 +34,11 @@ function Form() {
     if (!day || !f.name.trim()) return;
     setBusy(true);
     try {
-      let lng: number | null = editing?.lng ?? null; let lat: number | null = editing?.lat ?? null;
-      const query = f.zh.trim() || f.addr.trim();
-      const placeChanged = !editing || query !== (editing.zh_name || editing.zh_address || '');
-      if (query && placeChanged) {
-        const g = await fetch(`/api/amap/geocode?q=${encodeURIComponent(query)}&city=${encodeURIComponent(day.city)}`).then((r) => r.json());
-        if (!g.error) { lng = g.lng; lat = g.lat; }
-        else toast({ text: `위치를 못 찾았어요 (${g.error}) · 일정은 저장해요`, ms: 4000 });
-      }
       const patch: Partial<Block> = {
         day_id: day.id, name: f.name.trim(), zh_name: f.zh.trim() || null, zh_address: f.addr.trim() || null, type: f.type,
         start_time: f.start || null, duration_text: f.dur.trim() || null, duration_min: parseDuration(f.dur),
-        note: f.note.trim() || null, memo: f.memo.trim() || null, important: f.important, lng, lat,
+        note: f.note.trim() || null, memo: f.memo.trim() || null, important: f.important,
+        travel: f.travel.trim() ? { fromId: 'manual', mode: /도보|걸/.test(f.travel) ? 'walk' : /택시|디디/.test(f.travel) ? 'taxi' : 'transit', minutes: parseDuration(f.travel) ?? 0, text: f.travel.trim() } : null,
         reservation: f.hasRes ? { ...(editing?.reservation ?? {}), owner: f.owner || undefined, url: f.url || undefined } : null,
       };
       let saved: Block;
@@ -97,6 +90,7 @@ function Form() {
           <div className="field"><label htmlFor="addr">중국어 주소 (기사님께 보여줄 것)</label><input id="addr" className="zh" lang="zh-CN" value={f.addr} onChange={(e) => set({ addr: e.target.value })} placeholder="上海市黄浦区 ..." /></div>
           <div className="field"><label htmlFor="note">장소 특이사항</label><input id="note" value={f.note} onChange={(e) => set({ note: e.target.value })} placeholder="예: 오전이 덜 붐빔, 월요일 휴무" /></div>
           <div className="field"><label htmlFor="memo">메모</label><input id="memo" value={f.memo} onChange={(e) => set({ memo: e.target.value })} placeholder="예: 구곡교에서 가족사진" /></div>
+          <div className="field"><label htmlFor="travel">이전 장소에서 오는 이동</label><input id="travel" value={f.travel} onChange={(e) => set({ travel: e.target.value })} placeholder="예: 지하철 25분, 도보 8분" /><span style={{ fontSize: 12, color: 'var(--muted)' }}>적어두면 하루 목록의 블록 사이에 보여요</span></div>
           {!editId && <div className="field"><label htmlFor="todo">할 일</label><input id="todo" value={f.todo} onChange={(e) => set({ todo: e.target.value })} placeholder="예: 여권 챙기기" /></div>}
         </div>
 
