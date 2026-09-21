@@ -14,6 +14,7 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
   const [tab, setTab] = useState<'todo' | 'res' | 'menu'>('todo');
   const [m, setM] = useState({ ko: '', zh: '', price: '', desc: '' });
   const [newTodo, setNewTodo] = useState('');
+  const [newTime, setNewTime] = useState('');
   const [spendOpen, setSpendOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [cat, setCat] = useState('입장료');
@@ -31,8 +32,8 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
   const add = () => {
     const text = newTodo.trim();
     if (!text) return;
-    save({ todos: [...b.todos, { id: Math.random().toString(36).slice(2, 8), text, done: false }] });
-    setNewTodo('');
+    save({ todos: [...b.todos, { id: Math.random().toString(36).slice(2, 8), text, done: false, time: newTime || undefined }] });
+    setNewTodo(''); setNewTime('');
   };
   const setMenu = (menu: MenuItem[]) => save({ menu });
   const setRes = (patch: Partial<NonNullable<Block['reservation']>>) => save({ reservation: { ...(res ?? {}), ...patch } });
@@ -60,15 +61,20 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
 
       {tab === 'todo' && (
         <div>
-          {b.todos.map((t) => (
+          {[...b.todos].sort((x, y) => (x.time ?? '99:99').localeCompare(y.time ?? '99:99')).map((t) => (
             <button key={t.id} onClick={() => toggle(t.id)} style={{ width: '100%', minHeight: 56, border: 'none', borderBottom: '1px solid #f0f0f2', background: 'transparent', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '0 2px' }}>
               <span style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.done ? 'var(--ink)' : 'transparent', border: t.done ? 'none' : '1.5px solid #bdbdc2', color: '#fff' }}>{t.done && <Icon d={P.check} size={14} stroke={3} />}</span>
-              <span style={{ fontSize: 15, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--muted)' : 'var(--ink)' }}>{t.text}</span>
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 15, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--muted)' : 'var(--ink)' }}>{t.time && <span style={{ fontSize: 13, fontWeight: 700, color: t.done ? 'var(--muted)' : 'var(--sky-text)' }}>{t.time}</span>}{t.text}</span>
             </button>
           ))}
-          <label className="sr" htmlFor="new-todo">할 일 추가</label>
-          <input id="new-todo" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="할 일 적고 Enter"
-            style={{ marginTop: 14, width: '100%', minHeight: 46, border: 'none', borderRadius: 14, padding: '0 16px', background: 'var(--surface)', fontSize: 16 }} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <label className="sr" htmlFor="new-time">시간</label>
+            <input id="new-time" type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)}
+              style={{ width: 118, minHeight: 46, border: 'none', borderRadius: 14, padding: '0 10px', background: 'var(--surface)', fontSize: 15 }} />
+            <label className="sr" htmlFor="new-todo">할 일 추가</label>
+            <input id="new-todo" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="할 일 적고 Enter"
+              style={{ flexGrow: 1, minHeight: 46, border: 'none', borderRadius: 14, padding: '0 16px', background: 'var(--surface)', fontSize: 16 }} />
+          </div>
         </div>
       )}
       {tab === 'res' && (
