@@ -2,10 +2,10 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { deleteBlock, logChange, reorderBlocks, restoreBlock, updateDay, useBlocks, useDays, useMe } from '@/lib/data';
+import { currentMe, deleteBlock, logChange, reorderBlocks, restoreBlock, updateDay, useBlocks, useDays, useMe } from '@/lib/data';
 import { Icon, P, TYPE_PATHS } from '@/lib/icons';
-import { dateLabel, nowMin, toMin } from '@/lib/time';
-import type { Block } from '@/lib/types';
+import { dateLabel, fromMin, nowMin, toMin } from '@/lib/time';
+import type { Block, Snack } from '@/lib/types';
 import { Confirm, TopBar, useToast } from '@/components/ui';
 import BlockSheet from '@/components/BlockSheet';
 import EditList from '@/components/EditList';
@@ -24,6 +24,8 @@ function DayView() {
   const [pendingRemove, setPendingRemove] = useState<Block | null>(null);
   const [editKey, setEditKey] = useState(0);
   const [rename, setRename] = useState<string | null>(null);
+  const [snackText, setSnackText] = useState('');
+  const [addSnack, setAddSnack] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const press = useRef<ReturnType<typeof setTimeout>>();
 
@@ -83,6 +85,30 @@ function DayView() {
     } catch (e) { toast({ text: e instanceof Error ? e.message : '순서를 바꾸지 못했어요' }); }
   };
 
+  const snacks = day?.snacks ?? [];
+  const setSnacks = (next: Snack[]) => day && updateDay(day.id, { snacks: next }).catch((e) => toast({ text: e.message }));
+  const toggleSnack = (id: string) => setSnacks(snacks.map((s) => (s.id === id ? { ...s, done: !s.done } : s)));
+  const saveSnack = () => {
+    const text = snackText.trim();
+    if (!text) { setAddSnack(false); return; }
+    const delivery = /배달|시켜|메이퇀/.test(text);
+    setSnacks([...snacks, { id: Math.random().toString(36).slice(2, 8), ko: text.replace(/\s*배달$/, ''), delivery, by: currentMe() ?? undefined }]);
+    setSnackText(''); setAddSnack(false);
+  };
+
+  const summary = useMemo(() => {
+    const list = blocks ?? [];
+    const starts = list.map((b) => toMin(b.start_time)).filter((v): v is number => v != null);
+    const ends = list.map((b) => { const s = toMin(b.start_time); return s == null ? null : s + (b.duration_min ?? 60); }).filter((v): v is number => v != null);
+    const travelMin = list.reduce((sum, b) => sum + (b.travel?.minutes ?? 0), 0);
+    return {
+      startEnd: starts.length ? `${fromMin(Math.min(...starts))} 출발 → ${fromMin(Math.max(...ends))} 마무리` : '시간 미정',
+      travelMin,
+      travelText: travelMin >= 60 ? `${Math.floor(travelMin / 60)}시간 ${travelMin % 60}분` : `${travelMin}분`,
+      reserved: list.filter((b) => b.reservation).length,
+    };
+  }, [blocks]);
+
   const sheetBlock = useMemo(() => blocks?.find((b) => b.id === sheetId) ?? null, [blocks, sheetId]);
   const focusIdx = blocks?.findIndex((b) => b.id === focus) ?? -1;
   const fade = (i: number) => { const d = Math.abs(i - focusIdx); return d === 0 ? 1 : d === 1 ? 0.85 : d === 2 ? 0.5 : 0.25; };
@@ -114,6 +140,48 @@ function DayView() {
           <div className="meta"><span>{dateLabel(day.date) || day.city}</span><span className="dot" /><span>{dateLabel(day.date) ? day.city : `블록 ${blocks?.length ?? 0}개`}</span>{dateLabel(day.date) && <><span className="dot" /><span>블록 {blocks?.length ?? 0}개</span></>}</div>
         </div>
       </div>
+
+      {!edit && (
+        <div style={{ padding: '0 0 6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 20px 10px', fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 700, color: 'var(--ink)' }}>{summary.startEnd}</span>
+            <span className="dot" /><span>{blocks?.length ?? 0}곳</span>
+            {summary.travelMin > 0 && <><span className="dot" /><span>이동 {summary.travelText}</span></>}
+            {summary.reserved > 0 && <><span className="dot" /><span>예약 {summary.reserved}</span></>}
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', overflowX: 'auto', padding: '0 20px 12px', scrollbarWidth: 'none' }}>
+            {blocks?.map((b, i) => (
+              <span key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                {i > 0 && <Icon d={P.chev} size={12} color="#bdbdc2" stroke={2.5} />}
+                <button onClick={() => tap(b.id)} style={{ border: 'none', background: b.id === focus ? 'var(--ink)' : 'var(--chip)', color: b.id === focus ? '#fff' : 'var(--text)', borderRadius: 999, padding: '7px 12px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{b.name}</button>
+              </span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', overflowX: 'auto', padding: '0 20px 14px', scrollbarWidth: 'none' }}>
+            {(day.snacks ?? []).map((s) => (
+              <button key={s.id} onClick={() => toggleSnack(s.id)} aria-pressed={!!s.done}
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '0 14px', borderRadius: 999, border: s.done ? 'none' : '1.5px dashed #cfcfd3', background: s.done ? 'var(--sky-tint)' : '#fff', color: s.done ? 'var(--sky-text)' : 'var(--text)', fontSize: 14, fontWeight: 600 }}>
+                <Icon d={s.delivery ? P.bag : P.snack} size={16} color={s.done ? 'var(--sky-deep)' : '#9a9aa0'} />
+                <span style={{ textDecoration: s.done ? 'line-through' : 'none' }}>{s.ko}</span>
+                {s.zh && <span className="zh" style={{ fontSize: 12, color: 'var(--muted)' }}>{s.zh}</span>}
+              </button>
+            ))}
+            {addSnack ? (
+              <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <label className="sr" htmlFor="snack">먹고 싶은 것</label>
+                <input id="snack" autoFocus value={snackText} onChange={(e) => setSnackText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveSnack(); if (e.key === 'Escape') { setAddSnack(false); setSnackText(''); } }}
+                  placeholder="예: 밀크티 / 훠궈 배달" style={{ minHeight: 40, width: 190, borderRadius: 999, border: '1px solid var(--line)', padding: '0 14px', fontSize: 14 }} />
+                <button className="btn small" onClick={saveSnack}>붙이기</button>
+              </span>
+            ) : (
+              <button onClick={() => setAddSnack(true)} style={{ flexShrink: 0, minHeight: 40, padding: '0 14px', borderRadius: 999, border: '1.5px dashed #cfcfd3', background: '#fff', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: 'var(--muted)' }}>
+                <Icon d={P.plus} size={16} stroke={2} />군것질 붙이기
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {edit && blocks ? (
         <EditList key={editKey} blocks={blocks} onRemove={onRemove} onReorder={onReorder} onDone={() => setEdit(false)} />
