@@ -22,6 +22,19 @@ export const PHRASES: PhraseGroup[] = [
     ],
   },
   {
+    id: 'menu',
+    label: '메뉴판 앞에서',
+    items: [
+      { id: 'point', ko: '이거 주세요 (가리키며)', zh: '我要这个', yin: '워 야오 쩌거', icon: 'food', note: '메뉴판을 가리키며 보여주세요' },
+      { id: 'two', ko: '이거 두 개 주세요', zh: '这个要两份', yin: '쩌거 야오 량펀', icon: 'food' },
+      { id: 'what', ko: '이건 뭐예요?', zh: '这个是什么？', yin: '쩌거 스 션머', icon: 'help' },
+      { id: 'spicy', ko: '이거 매워요?', zh: '这个辣吗？', yin: '쩌거 라 마', icon: 'food' },
+      { id: 'milk2', ko: '우유가 들어가나요?', zh: '这个有牛奶吗？', yin: '쩌거 여우 니우나이 마', icon: 'milk' },
+      { id: 'shrimp', ko: '새우나 게 들어가나요?', zh: '这个有虾或蟹吗？', yin: '쩌거 여우 시아 훠 시에 마', icon: 'crab' },
+      { id: 'reco', ko: '뭐가 제일 잘 나가요?', zh: '推荐哪个？', yin: '퉤이젠 나거', icon: 'help' },
+    ],
+  },
+  {
     id: 'order',
     label: '주문할 때',
     items: [
