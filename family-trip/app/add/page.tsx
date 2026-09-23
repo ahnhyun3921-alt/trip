@@ -55,6 +55,7 @@ function Form() {
       const { data } = await sb().from('blocks').select('id,start_time,position').eq('day_id', day.id);
       const sorted = (data ?? []).sort((a, b) => (toMin(a.start_time) ?? 9999) - (toMin(b.start_time) ?? 9999) || a.position - b.position);
       await reorderBlocks(sorted.map((x) => x.id));
+      toast({ text: editing ? `${saved.name} 수정했어요 · 가족에게 알림을 보냈어요` : `${saved.name} 추가했어요 · 가족에게 알림을 보냈어요` });
       router.push(`/day/${day.n}`);
     } catch (e) {
       toast({ text: e instanceof Error ? e.message : '저장하지 못했어요' });
