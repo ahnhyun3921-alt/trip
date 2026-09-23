@@ -25,6 +25,7 @@ function DayView() {
   const [editKey, setEditKey] = useState(0);
   const [rename, setRename] = useState<string | null>(null);
   const [snackText, setSnackText] = useState('');
+  const [snackBrand, setSnackBrand] = useState('');
   const [addSnack, setAddSnack] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const press = useRef<ReturnType<typeof setTimeout>>();
@@ -92,8 +93,8 @@ function DayView() {
     const text = snackText.trim();
     if (!text) { setAddSnack(false); return; }
     const delivery = /배달|시켜|메이퇀/.test(text);
-    setSnacks([...snacks, { id: Math.random().toString(36).slice(2, 8), ko: text.replace(/\s*배달$/, ''), delivery, by: currentMe() ?? undefined }]);
-    setSnackText(''); setAddSnack(false);
+    setSnacks([...snacks, { id: Math.random().toString(36).slice(2, 8), ko: text.replace(/\s*배달$/, ''), brand: snackBrand.trim() || undefined, delivery, by: currentMe() ?? undefined }]);
+    setSnackText(''); setSnackBrand(''); setAddSnack(false);
   };
 
   const summary = useMemo(() => {
@@ -159,19 +160,29 @@ function DayView() {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', overflowX: 'auto', padding: '0 20px 14px', scrollbarWidth: 'none' }}>
             {(day.snacks ?? []).map((s) => (
-              <button key={s.id} onClick={() => toggleSnack(s.id)} aria-pressed={!!s.done}
-                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '0 14px', borderRadius: 999, border: s.done ? 'none' : '1.5px dashed #cfcfd3', background: s.done ? 'var(--sky-tint)' : '#fff', color: s.done ? 'var(--sky-text)' : 'var(--text)', fontSize: 14, fontWeight: 600 }}>
-                <Icon d={s.delivery ? P.bag : P.snack} size={16} color={s.done ? 'var(--sky-deep)' : '#9a9aa0'} />
-                <span style={{ textDecoration: s.done ? 'line-through' : 'none' }}>{s.ko}</span>
-                {s.zh && <span className="zh" style={{ fontSize: 12, color: 'var(--muted)' }}>{s.zh}</span>}
-              </button>
+              <span key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                <button onClick={() => toggleSnack(s.id)} aria-pressed={!!s.done}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '0 12px', borderRadius: 999, border: s.done ? 'none' : '1.5px dashed #cfcfd3', background: s.done ? 'var(--sky-tint)' : '#fff', color: s.done ? 'var(--sky-text)' : 'var(--text)', fontSize: 14, fontWeight: 600 }}>
+                  <Icon d={s.delivery ? P.bag : P.snack} size={16} color={s.done ? 'var(--sky-deep)' : '#9a9aa0'} />
+                  {s.brand && <span className="zh" style={{ fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 7, background: s.done ? '#fff' : 'var(--chip)', color: 'var(--muted)' }}>{s.brand}</span>}
+                  <span style={{ textDecoration: s.done ? 'line-through' : 'none' }}>{s.ko}</span>
+                </button>
+                <button aria-label={`${s.ko} 스티커 떼기`} onClick={() => setSnacks(snacks.filter((x) => x.id !== s.id))}
+                  style={{ width: 28, height: 28, border: 'none', background: 'transparent', color: '#bdbdc2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon d="M6 6l12 12M18 6L6 18" size={14} stroke={2.2} />
+                </button>
+              </span>
             ))}
             {addSnack ? (
               <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <label className="sr" htmlFor="snack-brand">가게·브랜드</label>
+                <input id="snack-brand" value={snackBrand} onChange={(e) => setSnackBrand(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveSnack(); }}
+                  placeholder="가게 (예: 蜜雪冰城)" style={{ minHeight: 40, width: 150, borderRadius: 999, border: '1px solid var(--line)', padding: '0 14px', fontSize: 14 }} />
                 <label className="sr" htmlFor="snack">먹고 싶은 것</label>
                 <input id="snack" autoFocus value={snackText} onChange={(e) => setSnackText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveSnack(); if (e.key === 'Escape') { setAddSnack(false); setSnackText(''); } }}
-                  placeholder="예: 밀크티 / 훠궈 배달" style={{ minHeight: 40, width: 190, borderRadius: 999, border: '1px solid var(--line)', padding: '0 14px', fontSize: 14 }} />
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveSnack(); if (e.key === 'Escape') { setAddSnack(false); setSnackText(''); setSnackBrand(''); } }}
+                  placeholder="예: 밀크티 / 훠궈 배달" style={{ minHeight: 40, width: 180, borderRadius: 999, border: '1px solid var(--line)', padding: '0 14px', fontSize: 14 }} />
                 <button className="btn small" onClick={saveSnack}>붙이기</button>
               </span>
             ) : (
