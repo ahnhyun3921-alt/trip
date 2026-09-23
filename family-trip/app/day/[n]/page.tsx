@@ -84,7 +84,18 @@ function DayView() {
       await reorderBlocks(ids);
       await logChange(day!.n, `${moved.name} 순서 바꿈`);
       refresh();
+      toast({ text: `${moved.name} 순서를 바꿔어요 · 가족에게 알림을 보냈어요` });
     } catch (e) { toast({ text: e instanceof Error ? e.message : '순서를 바꾸지 못했어요' }); }
+  };
+
+  const saveDay = () => {
+    if (!day || rename === null) return;
+    const title = rename.trim();
+    const city = renameCity.trim() || day.city;
+    updateDay(day.id, { title, city })
+      .then(() => logChange(day.n, `D${day.n} 이름·장소를 ${title || city}(으)로 바꿈`))
+      .then(() => toast({ text: '바꿔어요 · 가족에게 알림을 보냈어요' }))
+      .catch((e) => toast({ text: e.message }));
   };
 
   const snacks = day?.snacks ?? [];
@@ -96,6 +107,7 @@ function DayView() {
     const delivery = /배달|시켜|메이퇀/.test(text);
     setSnacks([...snacks, { id: Math.random().toString(36).slice(2, 8), ko: text.replace(/\s*배달$/, ''), brand: snackBrand.trim() || undefined, delivery, by: currentMe() ?? undefined }]);
     setSnackText(''); setSnackBrand(''); setAddSnack(false);
+    toast({ text: `${text} 붙였어요`, ms: 2500 });
   };
 
   const summary = useMemo(() => {
@@ -134,13 +146,13 @@ function DayView() {
             <div style={{ display: 'flex', gap: 8, paddingRight: 20, flexWrap: 'wrap' }}>
               <label className="sr" htmlFor="day-title">날 이름</label>
               <input id="day-title" autoFocus value={rename} onChange={(e) => setRename(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { updateDay(day.id, { title: rename.trim(), city: renameCity.trim() || day.city }); setRename(null); } if (e.key === 'Escape') setRename(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { saveDay(); setRename(null); } if (e.key === 'Escape') setRename(null); }}
                 style={{ flexGrow: 1, minHeight: 44, borderRadius: 12, border: '1px solid var(--line)', padding: '0 12px', fontSize: 18, fontWeight: 700 }} />
               <label className="sr" htmlFor="day-city">장소</label>
               <input id="day-city" value={renameCity} onChange={(e) => setRenameCity(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { updateDay(day.id, { title: rename.trim(), city: renameCity.trim() || day.city }); setRename(null); } if (e.key === 'Escape') setRename(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { saveDay(); setRename(null); } if (e.key === 'Escape') setRename(null); }}
                 placeholder="장소 (예: 항저우)" style={{ width: 130, minHeight: 44, borderRadius: 12, border: '1px solid var(--line)', padding: '0 12px', fontSize: 15 }} />
-              <button className="btn small" onClick={() => { updateDay(day.id, { title: rename.trim(), city: renameCity.trim() || day.city }); setRename(null); }}>저장</button>
+              <button className="btn small" onClick={() => { saveDay(); setRename(null); }}>저장</button>
             </div>
           )}
           <div className="meta"><span>{dateLabel(day.date) || day.city}</span><span className="dot" /><span>{dateLabel(day.date) ? day.city : `블록 ${blocks?.length ?? 0}개`}</span>{dateLabel(day.date) && <><span className="dot" /><span>블록 {blocks?.length ?? 0}개</span></>}</div>
@@ -172,7 +184,7 @@ function DayView() {
                   {s.brand && <span className="zh" style={{ fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 7, background: s.done ? '#fff' : 'var(--chip)', color: 'var(--muted)' }}>{s.brand}</span>}
                   <span style={{ textDecoration: s.done ? 'line-through' : 'none' }}>{s.ko}</span>
                 </button>
-                <button aria-label={`${s.ko} 스티커 떼기`} onClick={() => setSnacks(snacks.filter((x) => x.id !== s.id))}
+                <button aria-label={`${s.ko} 스티커 떼기`} onClick={() => { setSnacks(snacks.filter((x) => x.id !== s.id)); toast({ text: `${s.ko} 스티커를 뜻어요`, ms: 2500 }); }}
                   style={{ width: 28, height: 28, border: 'none', background: 'transparent', color: '#bdbdc2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon d="M6 6l12 12M18 6L6 18" size={14} stroke={2.2} />
                 </button>
