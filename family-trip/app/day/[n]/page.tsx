@@ -84,7 +84,7 @@ function DayView() {
       await reorderBlocks(ids);
       await logChange(day!.n, `${moved.name} 순서 바꿈`);
       refresh();
-      toast({ text: `${moved.name} 순서를 바꿔어요 · 가족에게 알림을 보냈어요` });
+      toast({ text: `${moved.name} 순서를 바꿠어요 · 가족에게 알림을 보냈어요` });
     } catch (e) { toast({ text: e instanceof Error ? e.message : '순서를 바꾸지 못했어요' }); }
   };
 
@@ -94,7 +94,7 @@ function DayView() {
     const city = renameCity.trim() || day.city;
     updateDay(day.id, { title, city })
       .then(() => logChange(day.n, `D${day.n} 이름·장소를 ${title || city}(으)로 바꿈`))
-      .then(() => toast({ text: '바꿔어요 · 가족에게 알림을 보냈어요' }))
+      .then(() => toast({ text: `D${day.n}를 '${[title, city].filter(Boolean).join(' · ')}'로 바꿠어요 · 가족에게 알림을 보냈어요` }))
       .catch((e) => toast({ text: e.message }));
   };
 
