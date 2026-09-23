@@ -10,6 +10,8 @@ import { toKrw, useFx } from '@/lib/fx';
 import { BlackBar } from '@/components/ui';
 import type { Block } from '@/lib/types';
 
+const LINES = ['짐은 다 쌀어?', '오늘도 많이 걷자!', '만두 먹으러 가는 중', '밀크티는 몇 잔까지 가능?', '여권 챙겼지?', '오늘의 목표는 잘 먹기', '길 잃어도 괜찮아', '우리 가족 출동!', '발 아파도 즐거워', '탕후루 몇 개 먹을까'];
+
 export default function Trip() {
   const router = useRouter();
   const { me } = useMe();
@@ -49,6 +51,8 @@ export default function Trip() {
   const meM = memberByName(me);
   const { fx, error: fxError, setManual } = useFx();
   const [yuan, setYuan] = useState('');
+  const [line, setLine] = useState(LINES[0]);
+  useEffect(() => { setLine(LINES[Math.floor(Math.random() * LINES.length)]); }, []);
 
   return (
     <main className="page">
@@ -62,8 +66,8 @@ export default function Trip() {
         </div>
       </div>
       <div className="head">
-        <h1 className="big">상하이 · 항저우</h1>
-        <div className="meta"><span>{days?.length ?? 0}일</span><span className="dot" /><span>{me}</span></div>
+        <h1 className="big">{line}</h1>
+        <div className="meta"><span>상하이 · 항저우</span><span className="dot" /><span>{days?.length ?? 0}일</span><span className="dot" /><span>{me}</span></div>
       </div>
       {error && !days && <p className="err">{error}</p>}
 
