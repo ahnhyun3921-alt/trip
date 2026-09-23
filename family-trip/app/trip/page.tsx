@@ -10,7 +10,7 @@ import { toKrw, useFx } from '@/lib/fx';
 import { BlackBar } from '@/components/ui';
 import type { Block } from '@/lib/types';
 
-const LINES = ['짐은 다 쌀어?', '오늘도 많이 걷자!', '만두 먹으러 가는 중', '밀크티는 몇 잔까지 가능?', '여권 챙겼지?', '오늘의 목표는 잘 먹기', '길 잃어도 괜찮아', '우리 가족 출동!', '발 아파도 즐거워', '탕후루 몇 개 먹을까'];
+const LINES = ['오늘도 많이 걷자!', '밀크티 한 잔 하고 갈까?', '오늘은 뭐 먹지?', '만두 먹으러 가자', '길 잃어도 괜찮아', '천천히 가도 돼', '발 아파도 즐거워', '탕후루 몇 개 먹을까', '사진 많이 찍자', '물 마셨어?', '휴지 챙겼지?', '오늘도 잘 먹어보자', '다 같이 가자~', '잠깐 쉬었다 갈까?'];
 
 export default function Trip() {
   const router = useRouter();
