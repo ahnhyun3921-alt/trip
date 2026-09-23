@@ -13,6 +13,7 @@ const CATS = ['식비', '교통', '입장료', '쇼핑', '숙박', '기타'];
 export default function BlockSheet({ block, day, onClose }: { block: Block | null; day: Day; onClose: () => void }) {
   const [tab, setTab] = useState<'todo' | 'res' | 'menu'>('todo');
   const [m, setM] = useState({ ko: '', zh: '', price: '', desc: '' });
+  const [order, setOrder] = useState(false);
   const [newTodo, setNewTodo] = useState('');
   const [newTime, setNewTime] = useState('');
   const [spendOpen, setSpendOpen] = useState(false);
@@ -131,6 +132,13 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
                 {it.zh && <span className="zh" lang="zh-CN" style={{ fontSize: 14, color: 'var(--muted)' }}>{it.zh}</span>}
                 {it.desc && <span style={{ fontSize: 13, color: 'var(--text)' }}>{it.desc}</span>}
                 {it.price && <span style={{ fontSize: 14, fontWeight: 700 }}>¥ {it.price}</span>}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <button aria-label="빼기" onClick={() => setMenu(b.menu.map((x) => (x.id === it.id ? { ...x, qty: Math.max(0, (x.qty ?? 0) - 1) } : x)))}
+                    style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--line)', background: '#fff', fontSize: 16, lineHeight: 1 }}>−</button>
+                  <b style={{ fontSize: 15, minWidth: 16, textAlign: 'center' }}>{it.qty ?? 0}</b>
+                  <button aria-label="더하기" onClick={() => setMenu(b.menu.map((x) => (x.id === it.id ? { ...x, qty: (x.qty ?? 0) + 1 } : x)))}
+                    style={{ width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'var(--ink)', color: '#fff', fontSize: 16, lineHeight: 1 }}>+</button>
+                </span>
               </span>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <button className="icon-btn" aria-pressed={!!it.pick} aria-label="추천 표시" onClick={() => setMenu(b.menu.map((x) => (x.id === it.id ? { ...x, pick: !x.pick } : x)))}>
@@ -142,6 +150,21 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
               </span>
             </div>
           ))}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <label className="btn soft" style={{ flex: 1, cursor: 'pointer' }}>
+              <Icon d={P.plus} size={18} />메뉴판에서 찍어 담기
+              <input type="file" accept="image/*" capture="environment" className="sr" onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                try {
+                  const url = await uploadCapture(f);
+                  setMenu([...(b.menu ?? []), { id: Math.random().toString(36).slice(2, 8), ko: '메뉴판 사진', photo: url, qty: 1 }]);
+                  toast({ text: '메뉴판 사진을 담았어요 · 이름은 나중에 고쳐도 돼요', ms: 3000 });
+                } catch (err) { toast({ text: err instanceof Error ? err.message : '올리지 못했어요' }); }
+              }} />
+            </label>
+            <button className="btn" style={{ flex: 1 }} onClick={() => setOrder(true)}>주문서 보여주기</button>
+          </div>
           <div className="card" style={{ gap: 10 }}>
             <div className="field"><label htmlFor="m-ko">한국어 이름</label><input id="m-ko" value={m.ko} onChange={(e) => setM({ ...m, ko: e.target.value })} placeholder="예: 샤오룽바오" /></div>
             <div className="field"><label htmlFor="m-zh">중국어 이름 (주문할 때 보여주기)</label><input id="m-zh" className="zh" lang="zh-CN" value={m.zh} onChange={(e) => setM({ ...m, zh: e.target.value })} placeholder="예: 小笼包" /></div>
@@ -192,6 +215,32 @@ export default function BlockSheet({ block, day, onClose }: { block: Block | nul
         <span style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}><b style={{ fontSize: 16 }}>이동하기</b><span style={{ fontSize: 13, color: '#a1a1a6' }}>{b.travel?.text ?? '경로 보기'}</span></span>
         <span style={{ width: 44, height: 44, borderRadius: '50%', background: '#fff', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon d={P.arrow} size={18} stroke={2} /></span>
       </Link>
+      {order && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: '#fff', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '14px 12px 0' }}>
+            <button className="icon-btn" aria-label="닫기" onClick={() => setOrder(false)}><Icon d={P.back} size={22} stroke={2} /></button>
+          </div>
+          <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <span className="zh" lang="zh-CN" style={{ fontSize: 30, fontWeight: 800 }}>我们点这些</span>
+            {(b.menu ?? []).filter((x) => (x.qty ?? 0) > 0).map((x) => (
+              <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--line)', paddingBottom: 12 }}>
+                {x.photo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={x.photo} alt={x.ko} style={{ width: 76, height: 76, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
+                )}
+                <span style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span className="zh" lang="zh-CN" style={{ fontSize: 26, fontWeight: 800 }}>{x.zh || x.ko}</span>
+                  <span style={{ fontSize: 14, color: 'var(--muted)' }}>{x.ko}</span>
+                </span>
+                <span style={{ fontSize: 26, fontWeight: 800 }}>×{x.qty}</span>
+              </div>
+            ))}
+            {(b.menu ?? []).every((x) => !(x.qty ?? 0)) && <span style={{ fontSize: 15, color: 'var(--muted)' }}>메뉴 탭에서 수량을 올리면 여기에 담겨요</span>}
+            <span className="zh" lang="zh-CN" style={{ fontSize: 20, fontWeight: 700, background: 'var(--sky-tint)', color: 'var(--sky-text)', padding: '12px 14px', borderRadius: 16, lineHeight: 1.5 }}>过敏：牛奶、甲壳类（虾、蟹）。请不要放。</span>
+            <span className="zh" lang="zh-CN" style={{ fontSize: 18 }}>不要香菜，谢谢。</span>
+          </div>
+        </div>
+      )}
     </Sheet>
   );
 }
