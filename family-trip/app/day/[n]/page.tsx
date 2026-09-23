@@ -24,6 +24,7 @@ function DayView() {
   const [pendingRemove, setPendingRemove] = useState<Block | null>(null);
   const [editKey, setEditKey] = useState(0);
   const [rename, setRename] = useState<string | null>(null);
+  const [renameCity, setRenameCity] = useState('');
   const [snackText, setSnackText] = useState('');
   const [snackBrand, setSnackBrand] = useState('');
   const [addSnack, setAddSnack] = useState(false);
@@ -125,17 +126,21 @@ function DayView() {
         </>} />
         <div className="head" style={{ paddingLeft: 20 }}>
           {rename === null ? (
-            <button onClick={() => setRename(day.title)} style={{ border: 'none', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}>
+            <button onClick={() => { setRename(day.title); setRenameCity(day.city); }} style={{ border: 'none', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}>
               <h1>D{day.n} {day.title}</h1>
               <Icon d={P.pencil} size={16} color="#9a9aa0" />
             </button>
           ) : (
-            <div style={{ display: 'flex', gap: 8, paddingRight: 20 }}>
+            <div style={{ display: 'flex', gap: 8, paddingRight: 20, flexWrap: 'wrap' }}>
               <label className="sr" htmlFor="day-title">날 이름</label>
               <input id="day-title" autoFocus value={rename} onChange={(e) => setRename(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { updateDay(day.id, { title: rename.trim() }); setRename(null); } if (e.key === 'Escape') setRename(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { updateDay(day.id, { title: rename.trim(), city: renameCity.trim() || day.city }); setRename(null); } if (e.key === 'Escape') setRename(null); }}
                 style={{ flexGrow: 1, minHeight: 44, borderRadius: 12, border: '1px solid var(--line)', padding: '0 12px', fontSize: 18, fontWeight: 700 }} />
-              <button className="btn small" onClick={() => { updateDay(day.id, { title: rename.trim() }); setRename(null); }}>저장</button>
+              <label className="sr" htmlFor="day-city">장소</label>
+              <input id="day-city" value={renameCity} onChange={(e) => setRenameCity(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { updateDay(day.id, { title: rename.trim(), city: renameCity.trim() || day.city }); setRename(null); } if (e.key === 'Escape') setRename(null); }}
+                placeholder="장소 (예: 항저우)" style={{ width: 130, minHeight: 44, borderRadius: 12, border: '1px solid var(--line)', padding: '0 12px', fontSize: 15 }} />
+              <button className="btn small" onClick={() => { updateDay(day.id, { title: rename.trim(), city: renameCity.trim() || day.city }); setRename(null); }}>저장</button>
             </div>
           )}
           <div className="meta"><span>{dateLabel(day.date) || day.city}</span><span className="dot" /><span>{dateLabel(day.date) ? day.city : `블록 ${blocks?.length ?? 0}개`}</span>{dateLabel(day.date) && <><span className="dot" /><span>블록 {blocks?.length ?? 0}개</span></>}</div>
