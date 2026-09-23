@@ -8,5 +8,5 @@ export type Block = { id: string; day_id: string; position: number; type: BlockT
 export type Expense = { id: string; day_id: string | null; block_id: string | null; label: string; category: string; amount: number; created_by: string | null; created_at: string };
 export type Change = { id: string; day_n: number | null; summary: string; actor: string | null; created_at: string };
 export type AiOption = { title: string; reason: string; summary: string; changes: { id: string; start_time?: string; duration_min?: number; remove?: boolean }[] };
-export type MenuItem = { id: string; ko: string; zh?: string; price?: string; desc?: string; photo?: string; pick?: boolean };
+export type MenuItem = { id: string; ko: string; zh?: string; price?: string; desc?: string; photo?: string; pick?: boolean; qty?: number };
 export type Snack = { id: string; ko: string; brand?: string; zh?: string; delivery?: boolean; done?: boolean; by?: string };
