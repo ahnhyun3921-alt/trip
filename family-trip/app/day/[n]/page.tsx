@@ -184,7 +184,7 @@ function DayView() {
                   {s.brand && <span className="zh" style={{ fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 7, background: s.done ? '#fff' : 'var(--chip)', color: 'var(--muted)' }}>{s.brand}</span>}
                   <span style={{ textDecoration: s.done ? 'line-through' : 'none' }}>{s.ko}</span>
                 </button>
-                <button aria-label={`${s.ko} 스티커 떼기`} onClick={() => { setSnacks(snacks.filter((x) => x.id !== s.id)); toast({ text: `${s.ko} 스티커를 뜻어요`, ms: 2500 }); }}
+                <button aria-label={`${s.ko} 스티커 떼기`} onClick={() => { setSnacks(snacks.filter((x) => x.id !== s.id)); toast({ text: `${s.ko} 스티커를 뗐어요`, ms: 2500 }); }}
                   style={{ width: 28, height: 28, border: 'none', background: 'transparent', color: '#bdbdc2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon d="M6 6l12 12M18 6L6 18" size={14} stroke={2.2} />
                 </button>
