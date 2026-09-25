@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { addWish, deleteWish, updateWish, useDays, useWishes, Wish } from '@/lib/data';
+import { addWish, deleteWish, updateWish, uploadCapture, useDays, useWishes, Wish } from '@/lib/data';
 import { Icon, P } from '@/lib/icons';
 import { TopBar, useToast } from '@/components/ui';
 
@@ -17,6 +17,10 @@ export default function WishPage() {
   const [ko, setKo] = useState('');
   const [brand, setBrand] = useState('');
   const [forwho, setForwho] = useState('');
+  const [memo, setMemo] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [big, setBig] = useState<string | null>(null);
   const { data: wishes, refresh } = useWishes();
   const { data: days } = useDays();
   const toast = useToast();
@@ -30,11 +34,18 @@ export default function WishPage() {
     const name = ko.trim();
     if (!name || tab === 'snack') return;
     try {
-      await addWish({ cat: tab, ko: name, brand: brand.trim() || null, forwho: forwho.trim() || null });
-      setKo(''); setBrand(''); setForwho('');
+      await addWish({ cat: tab, ko: name, brand: brand.trim() || null, forwho: forwho.trim() || null, memo: memo.trim() || null, photo });
+      setKo(''); setBrand(''); setForwho(''); setMemo(''); setPhoto(null);
       refresh();
       toast({ text: `${name} 담았어요`, ms: 2500 });
     } catch (e) { toast({ text: e instanceof Error ? e.message : '담지 못했어요' }); }
+  };
+  const upload = async (f: File | undefined, onDone: (url: string) => void) => {
+    if (!f) return;
+    setBusy(true);
+    try { onDone(await uploadCapture(f)); }
+    catch (e) { toast({ text: e instanceof Error ? e.message : '사진을 올리지 못했어요' }); }
+    setBusy(false);
   };
   const toggle = (w: Wish) => updateWish(w.id, { done: !w.done }).then(refresh).catch((e) => toast({ text: e.message }));
   const remove = (w: Wish) => deleteWish(w.id).then(() => { refresh(); toast({ text: `${w.ko} 뺐어요`, ms: 2500 }); }).catch((e) => toast({ text: e.message }));
@@ -63,6 +74,18 @@ export default function WishPage() {
             <div className="field" style={{ flex: 1.3 }}><label htmlFor="w-ko">이름</label><input id="w-ko" value={ko} onChange={(e) => setKo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder={cur.hint.split(' · ')[1]} /></div>
           </div>
           {cur.who && <div className="field"><label htmlFor="w-who">누구 거</label><input id="w-who" value={forwho} onChange={(e) => setForwho(e.target.value)} placeholder="예: 회사 동료들" /></div>}
+          <div className="field"><label htmlFor="w-memo">메모</label><input id="w-memo" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 2+1 행사할 때 사기, 초록색 포장" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {photo
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={photo} alt="담을 사진" style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'cover' }} />
+              : <span style={{ width: 56, height: 56, borderRadius: 14, background: '#fff', border: '1.5px dashed #cfcfd3' }} />}
+            <label className="btn soft small" style={{ cursor: 'pointer' }}>
+              {busy ? '올리는 중…' : photo ? '사진 바꾸기' : '사진 넣기'}
+              <input type="file" accept="image/*" className="sr" onChange={(e) => upload(e.target.files?.[0], setPhoto)} />
+            </label>
+            {photo && <button className="btn small soft" onClick={() => setPhoto(null)}>빼기</button>}
+          </div>
           <button className="btn" disabled={!ko.trim()} onClick={add}><Icon d={P.plus} size={18} stroke={2} />담기</button>
         </div>
       )}
@@ -90,12 +113,30 @@ export default function WishPage() {
                 {w.brand && <span className="zh" style={{ fontSize: 12, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: 'var(--chip)', color: 'var(--muted)', marginRight: 6 }}>{w.brand}</span>}
                 {w.ko}
               </b>
+              {w.memo && <span style={{ color: 'var(--text)' }}>{w.memo}</span>}
               <span>{[w.forwho && `${w.forwho} 줄 거`, w.by && `${w.by}가 담음`].filter(Boolean).join(' · ')}</span>
             </span>
+            {w.photo ? (
+              <button onClick={() => setBig(w.photo)} aria-label={`${w.ko} 사진 크게 보기`} style={{ border: 'none', padding: 0, background: 'none', flexShrink: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={w.photo} alt={w.ko} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover' }} />
+              </button>
+            ) : (
+              <label className="icon-btn" aria-label={`${w.ko} 사진 넣기`} style={{ cursor: 'pointer', color: '#bdbdc2' }}>
+                <Icon d="M4 8h3l2-3h6l2 3h3v11H4zM8.5 13a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0" size={18} />
+                <input type="file" accept="image/*" className="sr" onChange={(e) => upload(e.target.files?.[0], (url) => updateWish(w.id, { photo: url }).then(refresh))} />
+              </label>
+            )}
             <button className="icon-btn" aria-label={`${w.ko} 빼기`} onClick={() => remove(w)} style={{ color: '#bdbdc2' }}><Icon d="M6 6l12 12M18 6L6 18" size={16} stroke={2.2} /></button>
           </div>
         ))}
       </div>
+      {big && (
+        <button onClick={() => setBig(null)} aria-label="닫기" style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.85)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={big} alt="크게 보기" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 16 }} />
+        </button>
+      )}
     </main>
   );
 }
