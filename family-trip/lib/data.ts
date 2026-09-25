@@ -146,3 +146,26 @@ export function useChangeFeed(onChange: (c: Change) => void) {
     return () => { sb().removeChannel(ch); };
   }, [onChange]);
 }
+
+// ---------- 사갈 것·먹을 것 모음 (편의점 / 기념품 / 배달) ----------
+export type Wish = { id: string; cat: 'store' | 'gift' | 'delivery'; ko: string; brand: string | null; forwho: string | null; done: boolean; by: string | null; created_at: string };
+
+export function useWishes() {
+  return useLive<Wish[]>('wishes', async () => {
+    const { data, error } = await sb().from('wishes').select('*').order('created_at');
+    if (error) throw error;
+    return data as Wish[];
+  }, [{ table: 'wishes' }]);
+}
+export async function addWish(w: Partial<Wish>) {
+  const { error } = await sb().from('wishes').insert({ ...w, by: currentMe() });
+  if (error) throw error;
+}
+export async function updateWish(id: string, patch: Partial<Wish>) {
+  const { error } = await sb().from('wishes').update(patch).eq('id', id);
+  if (error) throw error;
+}
+export async function deleteWish(id: string) {
+  const { error } = await sb().from('wishes').delete().eq('id', id);
+  if (error) throw error;
+}
