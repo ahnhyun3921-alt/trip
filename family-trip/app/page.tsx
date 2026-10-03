@@ -9,7 +9,7 @@ function Pick() {
   const { me, setMe, logout } = useMe();
   const router = useRouter();
   const switching = useSearchParams().get('switch') === '1';
-  useEffect(() => { if (me && !switching) router.replace('/trip'); }, [me, switching, router]);
+  useEffect(() => { if (me && !switching) router.replace('/today'); }, [me, switching, router]);
   if (me === undefined) return null;
   return (
     <main className="page" style={{ padding: '64px 20px 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -21,7 +21,7 @@ function Pick() {
         {MEMBERS.map((m) => {
           const mine = m.name === me;
           return (
-            <button key={m.name} onClick={() => { setMe(m.name); router.replace('/trip'); }}
+            <button key={m.name} onClick={() => { setMe(m.name); router.replace('/today'); }}
               style={{ minHeight: 84, display: 'flex', alignItems: 'center', gap: 16, padding: '12px 18px 12px 12px', background: 'var(--surface)', border: mine ? '1.5px solid var(--ink)' : '1.5px solid var(--surface)', borderRadius: 26, textAlign: 'left' }}>
               <span style={{ width: 60, height: 60, borderRadius: 22, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Face d={m.face} size={40} /></span>
               <b style={{ flexGrow: 1, fontSize: 19 }}>{m.name}</b>
