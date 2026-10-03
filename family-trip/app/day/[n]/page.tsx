@@ -252,7 +252,7 @@ function DayView() {
       )}
 
       {!edit && blocks && blocks.length > 1 && (
-        <div style={{ position: 'fixed', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ position: 'fixed', bottom: 'calc(var(--tabbar-h) + 14px)', left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
           <span style={{ fontSize: 12, color: '#fff', background: 'var(--ink)', padding: '9px 14px', borderRadius: 999 }}>길게 눌러 끌면 순서를 바꿀 수 있어요</span>
         </div>
       )}
