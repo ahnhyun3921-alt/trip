@@ -1,7 +1,7 @@
 {
   "name": "상하이 · 항저우 가족여행",
   "short_name": "가족여행",
-  "start_url": "/trip",
+  "start_url": "/today",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
