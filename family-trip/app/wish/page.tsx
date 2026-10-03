@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { addWish, deleteWish, updateWish, uploadCapture, useDays, useWishes, Wish } from '@/lib/data';
 import { Icon, P } from '@/lib/icons';
@@ -52,7 +53,7 @@ export default function WishPage() {
 
   return (
     <main className="page">
-      <TopBar back="/trip" />
+      <TopBar right={<Link href="/spend" className="btn small soft"><Icon d={P.receipt} size={16} />지출</Link>} />
       <div className="head">
         <h1 className="big">사갈 것·먹을 것</h1>
         <div className="meta"><span>가족 모두 같이 채워요</span><span className="dot" /><span>산 건 눌러서 도장</span></div>
