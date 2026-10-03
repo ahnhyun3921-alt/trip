@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Providers from '@/components/Providers';
+import TabBar from '@/components/TabBar';
 
 export const metadata: Metadata = {
   title: '상하이 · 항저우',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <div className="app">{children}</div>
+          <TabBar />
         </Providers>
       </body>
     </html>
