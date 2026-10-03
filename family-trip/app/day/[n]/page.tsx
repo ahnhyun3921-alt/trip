@@ -155,7 +155,7 @@ function DayView() {
               <button className="btn small" onClick={() => { saveDay(); setRename(null); }}>저장</button>
             </div>
           )}
-          <div className="meta"><span>{dateLabel(day.date) || day.city}</span><span className="dot" /><span>{dateLabel(day.date) ? day.city : `블록 ${blocks?.length ?? 0}개`}</span>{dateLabel(day.date) && <><span className="dot" /><span>블록 {blocks?.length ?? 0}개</span></>}</div>
+          <div className="meta"><span>{dateLabel(day.date) || '날짜 미정'}</span><span className="dot" /><span>{day.city}</span></div>
         </div>
       </div>
 
