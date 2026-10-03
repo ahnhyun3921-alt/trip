@@ -28,7 +28,7 @@ function Row({ b }: { b: Block }) {
 function Trash() {
   const { setNodeRef, isOver } = useDroppable({ id: 'trash' });
   return (
-    <div ref={setNodeRef} style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 16, width: 'calc(100% - 32px)', maxWidth: 448, height: 84, borderRadius: 24, background: isOver ? '#333' : 'var(--ink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 15, fontWeight: 600, zIndex: 20 }}>
+    <div ref={setNodeRef} style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 'calc(var(--tabbar-h) + 12px)', width: 'calc(100% - 32px)', maxWidth: 448, height: 84, borderRadius: 24, background: isOver ? '#333' : 'var(--ink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 15, fontWeight: 600, zIndex: 20 }}>
       <Icon d={P.trash} size={20} />여기에 놓으면 빼기
     </div>
   );
