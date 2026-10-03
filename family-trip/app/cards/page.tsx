@@ -22,7 +22,7 @@ export default function Cards() {
 
   return (
     <main className="page">
-      <TopBar back="/trip" />
+      <TopBar />
       <div className="head">
         <h1 className="big">중국어 카드</h1>
         <div className="meta"><span>누르면 크게 보여요</span><span className="dot" /><span>발음과 소리도 같이</span></div>
