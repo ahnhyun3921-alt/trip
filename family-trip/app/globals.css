@@ -133,3 +133,57 @@ button { cursor: pointer; }
 .empty { padding: 40px 24px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .err { margin: 12px 24px; padding: 12px 14px; border-radius: 14px; background: var(--chip); font-size: 13px; color: var(--text); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* =========================================================
+   디자인 시스템 v2 — 현장 층(밝게) · 기록 층(다크 우표)
+   자세한 규칙은 DESIGN.md
+   ========================================================= */
+:root {
+  --tabbar-h: 0px;            /* 탭바가 있는 화면에서 TabBar가 64px로 바꿔요 */
+  --accent: #2f97de;          /* 채움·표시용 (글자에는 --accent-text) */
+  --accent-text: #1c7dc4;     /* 흰 바탕 위 글자용, 대비 4.6:1 */
+  --accent-tint: #e8f4fc;
+  --d-bg: #0b0b0c;            /* 기록 층 */
+  --d-surface: #17171a;
+  --d-line: rgba(255, 255, 255, 0.10);
+  --d-grid: rgba(255, 255, 255, 0.06);
+  --d-ink: #f5f5f7;
+  --d-muted: #9a9aa0;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.page { padding-bottom: calc(140px + var(--tabbar-h) + env(safe-area-inset-bottom)); }
+
+/* 아래 탭 */
+.tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 480px; height: calc(64px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); background: rgba(255, 255, 255, 0.94); backdrop-filter: saturate(1.4) blur(16px); -webkit-backdrop-filter: saturate(1.4) blur(16px); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); z-index: 24; }
+.tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: #8e8e93; min-height: 64px; }
+.tabbar a[aria-current='page'] { color: var(--ink); }
+.tabbar a[aria-current='page'] .tab-dot { opacity: 1; }
+.tab-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0; transition: opacity 0.16s var(--ease); }
+
+/* 검정 바는 탭 위에 떠요 */
+.blackbar { bottom: calc(var(--tabbar-h) + 10px); width: calc(100% - 24px); max-width: 456px; border-radius: 22px; padding: 14px 16px; }
+
+/* 우표 (기록 층 시그니처) */
+.stamp { --perf: 5px; position: relative; display: inline-block; background: #fff; padding: 6px;
+  -webkit-mask: radial-gradient(circle at var(--perf) var(--perf), transparent calc(var(--perf) - 1.5px), #000 calc(var(--perf) - 1px)) calc(var(--perf) * -1) calc(var(--perf) * -1) / calc(var(--perf) * 2) calc(var(--perf) * 2) round;
+          mask: radial-gradient(circle at var(--perf) var(--perf), transparent calc(var(--perf) - 1.5px), #000 calc(var(--perf) - 1px)) calc(var(--perf) * -1) calc(var(--perf) * -1) / calc(var(--perf) * 2) calc(var(--perf) * 2) round; }
+.stamp > img, .stamp > .stamp-art { display: block; width: 100%; height: 100%; object-fit: cover; }
+.stamp-in { animation: stamp-in 0.32s var(--spring); }
+@keyframes stamp-in { from { transform: scale(1.18) rotate(-6deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+
+/* 기록 층 바탕 */
+.dark-world { background-color: var(--d-bg); color: var(--d-ink); background-image: linear-gradient(var(--d-grid) 1px, transparent 1px), linear-gradient(90deg, var(--d-grid) 1px, transparent 1px); background-size: 24px 24px; }
+
+/* 오늘 탭 */
+.now-card { margin: 16px 20px 0; padding: 22px 20px 18px; border-radius: 28px; background: var(--ink); color: #fff; display: flex; flex-direction: column; gap: 14px; }
+.now-card .label { font-size: 13px; font-weight: 600; color: #a1a1a6; display: flex; align-items: center; gap: 8px; }
+.now-card .label .live { width: 8px; height: 8px; border-radius: 50%; background: var(--sky); box-shadow: 0 0 0 4px rgba(143, 208, 247, 0.25); }
+.now-card h2 { margin: 0; font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
+.now-card .sub { font-size: 15px; color: #d1d1d6; line-height: 1.45; }
+.btn.light { background: #fff; color: var(--ink); }
+.btn.ghost-dark { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; }
+.tool { min-height: 92px; border-radius: 22px; background: var(--surface); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border: none; text-align: left; color: var(--ink); }
+.tool b { font-size: 16px; }
+.tool span { font-size: 12px; color: var(--muted); }
