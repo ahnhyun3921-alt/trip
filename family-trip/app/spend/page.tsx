@@ -36,7 +36,7 @@ export default function Spend() {
 
   return (
     <main className="page">
-      <TopBar back="/trip" center={<b style={{ fontSize: 15 }}>지출</b>} />
+      <TopBar back="/wish" center={<b style={{ fontSize: 15 }}>지출</b>} />
       <div className="head">
         <span style={{ fontSize: 14, color: 'var(--muted)' }}>지금까지 쓴 돈</span>
         <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: '-0.02em' }}>¥ {total.toLocaleString()}</span>
