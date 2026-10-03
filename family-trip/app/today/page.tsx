@@ -22,12 +22,16 @@ function nowAndNext(blocks: Block[]) {
   return { cur: null, next: null };
 }
 
+const LINES = ['오늘도 많이 걷자!', '밀크티 한 잔 하고 갈까?', '오늘은 뭐 먹지?', '만두 먹으러 가자', '길 잃어도 괜찮아', '천천히 가도 돼', '발 아파도 즐거워', '사진 많이 찍자', '물 마셨어?', '휴지 챙겼지?', '다 같이 가자~', '잠깐 쉬었다 갈까?'];
+
 export default function Today() {
   const router = useRouter();
   const { me } = useMe();
   const { data: days } = useDays();
   const { fx } = useFx();
   const [yuan, setYuan] = useState('');
+  const [line, setLine] = useState(LINES[0]);
+  useEffect(() => { setLine(LINES[Math.floor(Math.random() * LINES.length)]); }, []);
   useEffect(() => { if (me === null) router.replace('/'); }, [me, router]);
 
   const today = todayISO();
@@ -60,7 +64,7 @@ export default function Today() {
         </span>
         <Link href="/?switch=1" className="icon-btn filled" aria-label={`${me ?? ''} · 사람 바꾸기`}>{meM && <Face d={meM.face} size={28} />}</Link>
       </div>
-      <div className="head"><h1 className="big" style={{ fontSize: 34 }}>{title}</h1></div>
+      <div className="head"><h1 className="big" style={{ fontSize: 34 }}>{title}</h1><div className="meta"><span>{line}</span></div></div>
 
       {focus ? (
         <section className="now-card" aria-label={cur ? '지금 일정' : '다음 일정'}>
@@ -81,15 +85,13 @@ export default function Today() {
           </div>
         </section>
       ) : (
-        <section className="now-card"><span className="label">오늘 일정이 비어 있어요</span><Link href="/trip" className="btn light">일정 보러 가기</Link></section>
+        <section className="now-card"><span className="label">{inTrip ? '오늘 일정이 비어 있어요' : `D${day?.n ?? 1} 일정이 아직 비어 있어요`}</span><Link href="/trip" className="btn light">일정 보러 가기</Link></section>
       )}
 
-      <div className="sec-h"><span><b style={{ color: 'var(--ink)' }}>바로</b>쓰기</span></div>
-      <div className="tools">
-        <Link href="/cards" className="tool"><Icon d={P.chat} size={22} /><span><b style={{ display: 'block', color: 'var(--ink)' }}>중국어 카드</b>알레르기 · 주문 · 길</span></Link>
-        <Link href="/toilet" className="tool"><Icon d={P.wc} size={22} /><span><b style={{ display: 'block', color: 'var(--ink)' }}>화장실</b>근처 찾기</span></Link>
-        <Link href={focus ? `/taxi/${(next ?? focus).id}` : '/cards'} className="tool"><Icon d={P.car} size={22} /><span><b style={{ display: 'block', color: 'var(--ink)' }}>기사님 카드</b>{focus ? `${(next ?? focus).name}까지` : '주소 보여주기'}</span></Link>
-        <Link href="/wish" className="tool"><Icon d={P.bag} size={22} /><span><b style={{ display: 'block', color: 'var(--ink)' }}>사갈 것</b>편의점 · 기념품</span></Link>
+      <div className="tools" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginTop: 12 }}>
+        <Link href={focus ? `/taxi/${(next ?? focus).id}` : '/cards'} className="tool"><Icon d={P.car} size={22} /><b>기사님 카드</b></Link>
+        <Link href="/toilet" className="tool"><Icon d={P.wc} size={22} /><b>화장실</b></Link>
+        <Link href="/spend" className="tool"><Icon d={P.receipt} size={22} /><b>지출 적기</b></Link>
       </div>
 
       <section aria-label="환율 계산" style={{ margin: '12px 20px 0', background: 'var(--surface)', borderRadius: 22, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
